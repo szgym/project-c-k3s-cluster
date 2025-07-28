@@ -44,6 +44,8 @@ project-c/
 │   └── demo-app/
 │       ├── Chart.yaml
 │       ├── values.yaml
+│       └── tests/
+│           └── test-connection.yaml
 │       └── templates/
 │           ├── deployment.yaml
 │           ├── service.yaml
@@ -53,8 +55,6 @@ project-c/
 │           └── serviceaccount.yaml
 │           └── NOTES.txt
 │           └── _helpers.tpl
-│       └── tests/
-│           └── test-connection.yaml
 ├── app/
 │   └── app.py
 ├── grafana-values.yaml
