@@ -1,0 +1,44 @@
+# —— Chart Parameters ——
+replicaCount: 1
+
+serviceAccount:
+  create: false
+  name: ""
+
+# —— Image settings ——
+image:
+  repository: demo-app
+  tag: "v1"
+  pullPolicy: IfNotPresent
+
+# —— Service config ——
+service:
+  type: ClusterIP  # changeable to NodePort or LoadBalancer via values
+  port: 8080
+
+# Ingress 
+ingress:
+  enabled: true
+  # Using k3s's built‑in Traefik, with host demo.local
+  hosts:
+    - host: demo.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+# —— Resource Requests & Limits ——
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+# —— Autoscaling Stub (disabled by default) ——
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 75
+
