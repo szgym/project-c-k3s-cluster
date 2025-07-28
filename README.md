@@ -64,7 +64,7 @@ project-c/
 ├── demo-app-rules.yaml
 ├── Dockerfile
 └── project_c_readme.md
- 
+```plaintext
 - Lint & Template-Render: `helm lint charts/demo-app`
   `helm template demo-app charts/demo-app --namespace project-c`
 - Verified app was running:
