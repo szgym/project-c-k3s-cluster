@@ -39,6 +39,7 @@ This project demonstrates deploying a containerized Flask application to a local
 
 - Created Kubernetes resources via Helm chart: `cd project-c/` `helm create demo-app`
   - Deployment, Service, Ingress, Chart, Values, Hpa, in a folder structure as below:
+```plaintext
 project-c/
 ├── charts/
 │   └── demo-app/
