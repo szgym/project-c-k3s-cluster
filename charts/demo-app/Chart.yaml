@@ -1,0 +1,6 @@
+apiVersion: v2
+name: demo-app
+description: A simple Flask app deployed on k3s via Helm
+version: 0.1.0        # bump later as you release upgrades
+appVersion: "v1"      # your Docker image tag
+

@@ -1,0 +1,14 @@
+project-c-clean.git/
+# Ignore local builds and tools
+*.tar
+*.tgz
+*.gz
+
+# Ignore generated Helm chart packages
+charts/**/demo-app-*.tgz
+
+# Optional: editor/IDE files
+.vscode/
+.idea/
+*.swp
+
