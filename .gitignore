@@ -1,8 +1,13 @@
-project-c-clean.git/
-# Ignore local builds and tools
+# .gitignore
 *.tar
 *.tgz
+*.zip
 *.gz
+*.exe
+*.bin
+*.iso
+project-c-clean.git/
+# Ignore local builds and tools
 
 # Ignore generated Helm chart packages
 charts/**/demo-app-*.tgz

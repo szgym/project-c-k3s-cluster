@@ -89,14 +89,14 @@ project-c/
   `helm upgrade --install demo-app ./demo-app`
   `kubectl get configmap,secret,deploy,pod -n project-c`
   `kubectl apply -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.25.0/controller.yaml`
-  # Download the binary (version v0.27.1)
+  - Download the binary (version v0.27.1)
   `curl -LO https://github.com/bitnami-labs/sealed-secrets/releases/download/ v0.27.1/kubeseal-0.27.1-linux-amd64.tar.gz`
-  # Extract the binary
+  - Extract the binary
   `tar -xzf kubeseal-0.27.1-linux-amd64.tar.gz kubeseal`
-  # Make it executable and move to /usr/local/bin
+  - Make it executable and move to /usr/local/bin
   `chmod +x kubeseal`
   `sudo mv kubeseal /usr/local/bin/`
-  # Confirm installation
+  - Confirm installation
   `kubeseal --version`
   `kubectl create secret generic demo-app-secret --from-literal=API_TOKEN=newtoken --from-literal=DB_PASSWORD=securepassword -n project-c --dry-run=client -o yaml > demo-app-secret.yaml`
   `kubeseal --format=yaml < demo-app-secret.yaml > demo-app-sealedsecret.yaml`
