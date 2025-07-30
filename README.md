@@ -20,6 +20,17 @@ This project demonstrates deploying a containerized Flask application to a local
 
 ---
 
+## Created GitHub repository
+
+- went to https://github.com/new to create repository, tip: initialize with .gitignore
+- Initialize Git locally: `cd ~/project-c` `git init`
+- Add files and create a commit: `git add .`
+  `git commit -m "Initial commit: Project C k3s local cluster"`
+- Connected my local repo to GitHub: 
+  `git remote add origin https://github.com/<your-username>/<repo-name>.git`
+- Generated a Personal Access Token
+- Pushed my code to GitHub: `git branch -M main` `git push -u origin main`
+
 ## Cluster Setup and Containerization (Week 1)
 
 - Installed k3s on local machine with: `curl -sfL https://get.k3s.io | sh -`

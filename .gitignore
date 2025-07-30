@@ -8,6 +8,13 @@
 *.iso
 project-c-clean.git/
 # Ignore local builds and tools
+__pycache__/
+*.pyc
+*.log
+*.DS_Store
+.env
+*.swp
+chart/.helmignore
 
 # Ignore generated Helm chart packages
 charts/**/demo-app-*.tgz
