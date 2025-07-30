@@ -49,7 +49,7 @@ This project demonstrates deploying a containerized Flask application to a local
 ## Basic Deployment (Week 2)
 
 - Created Kubernetes resources via Helm chart: `cd project-c/` `helm create demo-app`
-  - Deployment, Service, Ingress, Chart, Values, Hpa, in a folder structure as below:
+  - Deployment, Service, Ingress, Chart, Values, Hpa, etc. in a folder structure as below:
 ```plaintext
 project-c/
 ├── charts/
@@ -131,8 +131,13 @@ project-c/
 - Added `/etc/hosts` entry:
   127.0.0.1 demo.local
 - tested the Ingress Endpoint: `curl http://demo.local/metrics`
-  `curl http://demo.local/`
-- added Liveness and readiness Probe in project-c/charts/demo-app/templates/deployment.yaml and
+  `curl http://demo.local/` `curl http://demo.local/healthz`
+- added Liveness and readiness Probe in project-c/charts/demo-app/templates/deployment.yaml and Defined CPU/Memory Requests & Limits
+  `kubectl top pod -n project-c`
+- added labels in deployment.yaml and Verifyed After Deploy:
+  `helm upgrade --install demo-app ./charts/demo-app -n project-c`
+  `kubectl get deploy demo-app -n project-c -o yaml | grep -A 10 "labels:"`
+  `kubectl get deploy demo-app -n project-c -o jsonpath="{.metadata.annotations}"`
 - Helm Upgrade with Probes: `helm upgrade demo-app charts/demo-app -n project-c`
 - Additional Sanity Checks
   `kubectl logs deployment/demo-app -n project-c`

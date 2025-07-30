@@ -8,6 +8,11 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/version: {{ .Chart.AppVersion }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
+    environment: dev
+    owner: szgym
+  annotations:
+    description: "simple flask app for internship project"
+    git-revision: "{{ .Chart.AppVersion }}"
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -17,6 +22,8 @@ spec:
     metadata:
       labels:
         app: {{ include "demo-app.name" . }}
+        environment: dev
+        owner: szgym
     spec:
       containers:
       - name: demo-app
