@@ -8,7 +8,7 @@ serviceAccount:
 # —— Image settings ——
 image:
   repository: demo-app
-  tag: "v1"
+  tag: "v2"
   pullPolicy: IfNotPresent
 
 # —— Service config ——
