@@ -9,14 +9,6 @@ spec:
   groups:
     - name: demo-app.rules
       rules:
-        - alert: DemoAppHighMetric
-          expr: demo_app_custom_metric > 2
-          for: 30s
-          labels:
-            severity: warning
-          annotations:
-            summary: "Demo App metric is high"
-            description: "demo_app_custom_metric is above 10 for 30s"
         - alert: DemoAppNoRequests
           expr: rate(http_request_total{job="demo-app"}[1m]) == 0
           for: 1m

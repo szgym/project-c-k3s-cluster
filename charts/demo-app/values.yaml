@@ -52,3 +52,37 @@ secret:
 
 useSealedSecrets: true
 
+admin:
+  user: admin
+  existingSecret: grafana-admin
+  passwordKey: GF_SECURITY_ADMIN_PASSWORD
+
+dashboardProviders:
+  enabled: true
+  config:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'default'
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /opt/bitnami/grafana/dashboards/default
+
+global:
+  security:
+    allowInsecureImages: true
+    
+persistence:
+  enabled: true
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+
+grafana:
+  dashboardFilename: "demo-app-dashboard.json"
+
