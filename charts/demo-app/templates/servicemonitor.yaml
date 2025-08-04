@@ -1,0 +1,23 @@
+# project-c/charts/demo-app/templates/servicemonitor.yaml
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "demo-app.fullname" . }}-monitor
+  namespace: {{ .Values.serviceMonitor.namespace }}
+  labels:
+    release: {{ .Values.serviceMonitor.releaseLabel }}
+spec:
+  selector:
+    matchLabels:
+      {{- toYaml .Values.serviceMonitor.matchLabels | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.serviceMonitor.targetNamespace }}
+  endpoints:
+    - port: {{ .Values.serviceMonitor.port }}
+      path: {{ .Values.serviceMonitor.path }}
+      interval: {{ .Values.serviceMonitor.interval }}
+{{- end }}
+
+

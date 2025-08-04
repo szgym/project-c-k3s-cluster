@@ -1,0 +1,27 @@
+# project-c/charts/demo-app/templates/grafana-ingress.yaml
+{{- if .Values.grafanaIngress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    {{- with .Values.grafanaIngress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  rules:
+    - host: {{ .Values.grafanaIngress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.grafanaIngress.serviceName | default "grafana" }}
+                port:
+                  number: 80
+{{- end }}
+
+

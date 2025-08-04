@@ -1,0 +1,32 @@
+# project-c/charts/demo-app/templates/demo-app-rules.yaml
+{{- if .Values.prometheusRule.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "demo-app.fullname" . }}-rules
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: {{ include "demo-app.name" . }}.rules
+      rules:
+        - alert: DemoAppNoRequests
+          expr: rate(http_request_total{job="{{ include "demo-app.name" . }}"}[1m]) == 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "No HTTP requests to {{ include "demo-app.name" . }}"
+            description: "{{ include "demo-app.name" . }} has received no requests in the last 1 minute."
+
+        - alert: HighCPUUsage
+          expr: rate(container_cpu_usage_seconds_total{namespace="{{ .Release.Namespace }}", pod=~"{{ include "demo-app.fullname" . }}.*"}[1m]) > 0.05
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage detected in {{ include "demo-app.name" . }}"
+            description: "CPU usage for {{ include "demo-app.name" . }} pods has exceeded 5% for 1 minute."
+{{- end }}
+

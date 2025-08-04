@@ -1,8 +1,9 @@
-# charts/demo-app/templates/grafana-dashboard-configmap.yaml
+# project-c/charts/demo-app/templates/configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "demo-app.fullname" . }}-grafana-dashboard
+  namespace: project-c
+  name: {{ include "demo-app.fullname" . }}-config
   labels:
     grafana_dashboard: "1"
     app.kubernetes.io/name: {{ include "demo-app.name" . }}
@@ -10,6 +11,8 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/version: {{ .Chart.AppVersion }}
 data:
-  {{ .Values.grafana.dashboardFilename }}: |
-{{ .Files.Get "dashboards/demo-app-dashboard.json" | indent 4 }}
+{{- range .Values.grafana.dashboardFilenames }}
+  {{ . }}: |
+{{ $.Files.Get (printf "dashboards/%s" .) | indent 4 }}
+{{- end }}
 

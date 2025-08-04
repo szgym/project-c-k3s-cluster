@@ -1,7 +1,9 @@
+# project-c/charts/demo-app/templates/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "demo-app.fullname" . }}
+  namespace: project-c
   labels:
     app: {{ include "demo-app.name" . }}
     app.kubernetes.io/name: {{ include "demo-app.name" . }}

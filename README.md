@@ -57,25 +57,27 @@ project-c/
 │       ├── Chart.yaml
 │       ├── values.yaml
 │       └── templates/
+│           └── dashboards
+│               ├── demo-app-dashboard.json
+│               └── original-dashboard.json
 │           └── tests/
 │               └── test-connection.yaml
 │           ├── deployment.yaml
 │           ├── service.yaml
 │           ├── configmap.yaml
-│           └── ingress.yaml
-│           └── hpa.yaml
-│           └── serviceaccount.yaml
-│           └── NOTES.txt
-│           └── _helpers.tpl
-│           └── sealedsecret.yaml
+│           ├── dashboard-provisioning-config.yaml
+│           ├── ingress.yaml
+│           ├── hpa.yaml
+│           ├── grafana-ingress.yaml
+│           ├── prometheus-ingress.yaml
+│           ├── servicemonitor.yaml
+│           ├── demo-app-rules.yaml
+│           ├── NOTES.txt
+│           ├── _helpers.tpl
+│           ├── sealedsecret.yaml
 │           └── serviceaccount.yaml
 ├── app/
 │   └── app.py
-├── grafana-values.yaml
-├── grafana-ingress.yaml
-├── prometheus-ingress.yaml
-├── servicemonitor.yaml
-├── demo-app-rules.yaml
 ├── Dockerfile
 └── README.md
 ```
@@ -121,7 +123,6 @@ project-c/
   `helm repo update`
   `helm install helm-dashboard komodorio/helm-dashboard -n kube-system --create-namespace`
 
-
 ## Ingress & Scaling (Week 4)
 
 - Installed Traefik ingress controller (already built into k3s).
@@ -135,6 +136,7 @@ project-c/
 - added Liveness and readiness Probe in project-c/charts/demo-app/templates/deployment.yaml and Defined CPU/Memory Requests & Limits
   `kubectl top pod -n project-c`
 - added labels in deployment.yaml and Verifyed After Deploy:
+  `helm upgrade --install demo-app ./charts/demo-app -n monitoring`
   `helm upgrade --install demo-app ./charts/demo-app -n project-c`
   `kubectl get deploy demo-app -n project-c -o yaml | grep -A 10 "labels:"`
   `kubectl get deploy demo-app -n project-c -o jsonpath="{.metadata.annotations}"`

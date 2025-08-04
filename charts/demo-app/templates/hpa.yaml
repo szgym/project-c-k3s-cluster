@@ -1,8 +1,10 @@
+# project-c/charts/demo-app/templates/hpa.yaml
 {{- if .Values.autoscaling.enabled }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "demo-app.fullname" . }}-hpa
+  namespace: project-c
   labels:
     app: {{ include "demo-app.name" . }}
     app.kubernetes.io/name: {{ include "demo-app.name" . }}

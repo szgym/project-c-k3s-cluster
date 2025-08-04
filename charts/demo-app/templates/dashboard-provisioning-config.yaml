@@ -1,8 +1,9 @@
+# project-c/charts/demo-app/templates/dashboard-provisioning-configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: demo-app-grafana-dash-config
-  namespace: monitoring
+  namespace: project-c
 data:
   dashboards.yaml: |
     apiVersion: 1

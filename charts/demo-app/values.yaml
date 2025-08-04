@@ -1,5 +1,8 @@
+# project-c/charts/demo-app/values.yaml
 # —— Chart Parameters ——
 replicaCount: 1
+
+namespace: project-c
 
 serviceAccount:
   create: false
@@ -52,37 +55,53 @@ secret:
 
 useSealedSecrets: true
 
-admin:
-  user: admin
-  existingSecret: grafana-admin
-  passwordKey: GF_SECURITY_ADMIN_PASSWORD
-
-dashboardProviders:
-  enabled: true
-  config:
-    dashboardproviders.yaml:
-      apiVersion: 1
-      providers:
-        - name: 'default'
-          orgId: 1
-          folder: ''
-          type: file
-          disableDeletion: false
-          editable: true
-          options:
-            path: /opt/bitnami/grafana/dashboards/default
-
 global:
   security:
     allowInsecureImages: true
     
 persistence:
   enabled: true
-  storageClass: ""
+  storageClassName: "local-path"
   accessModes:
     - ReadWriteOnce
   size: 10Gi
 
+prometheusRule:
+  enabled: true
+
+prometheus:
+  ingress:
+    enabled: true
+    host: prometheus.local
+    serviceName: prometheus-kube-prometheus-prometheus
+    servicePort: 9090
+    annotations: {}
+
+grafanaIngress:
+  enabled: true
+  host: grafana.local
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    
 grafana:
-  dashboardFilename: "demo-app-dashboard.json"
+  dashboardFilenames:
+    - original-dashboard.json
+    - demo-app-dashboard.json
+
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    folder: /opt/bitnami/grafana/provisioning/dashboards/custom
+
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  releaseLabel: prometheus
+  matchLabels:
+    app: demo-app
+  targetNamespace: project-c
+  port: http
+  path: /metrics
+  interval: 15s
 
