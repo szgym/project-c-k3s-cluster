@@ -196,11 +196,11 @@ project-c/
 - Added Prometheus as a Data Source
 - Created a Dashboard & Panel, Added a Pod CPU/Memory Panel
 - Deploying Grafana with `grafana.local` Ingress.
-- created the grafana-values.yaml for Grafana
+- created new values in the values.yaml for Grafana
 - Added `/etc/hosts` entry:
   127.0.0.1 grafana.local
 - Upgraded Grafana with the override
-  `helm upgrade prometheus prometheus-community/kube-prometheus-stack -n monitoring -f grafana-values.yaml`
+  `helm upgrade prometheus prometheus-community/kube-prometheus-stack -n monitoring -f values.yaml`
 - run into issue: `ensure CRDs are installed first, resource mapping not found for name:` solution:
   `kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml`
   `kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml`
@@ -239,9 +239,15 @@ project-c/
   - `demo_app_custom_metric` threshold
   - CPU/memory usage threshold
 - Verified alert firing in Prometheus UI.
+- changed to official Grafana chart: `helm repo add grafana https://grafana.github.io/helm-charts`
+`helm repo update`
+`helm upgrade --install grafana grafana/grafana -f project-c/values.yaml -n monitoring`
+
 
 ## Final Refinements & Docs (Week 7)
-
+- created grafana-values.yaml to successfully use sealedsecret.yaml and then ran: 
+  `helm upgrade --install grafana grafana/grafana -f grafana-values.yaml -n monitoring`
+  `helm upgrade --install demo-app ./charts/demo-app -n project-c`
 - Reviewed all manifests.
 - Ensured Helm chart is reusable and parameterized.
 - Created and documented custom dashboards in Grafana:

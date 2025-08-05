@@ -49,10 +49,6 @@ config:
   appName: DemoApp
   logLevel: info
 
-secret:
-  dbPassword: securepassword
-  apiToken: secrettoken
-
 useSealedSecrets: true
 
 global:
@@ -77,16 +73,13 @@ prometheus:
     servicePort: 9090
     annotations: {}
 
-grafanaIngress:
-  enabled: true
-  host: grafana.local
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    
 grafana:
   dashboardFilenames:
     - original-dashboard.json
     - demo-app-dashboard.json
+
+grafanaIngress:
+  enabled: false
 
 sidecar:
   dashboards:
