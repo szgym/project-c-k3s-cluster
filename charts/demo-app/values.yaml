@@ -2,8 +2,6 @@
 # —— Chart Parameters ——
 replicaCount: 1
 
-namespace: project-c
-
 serviceAccount:
   create: false
   name: ""
@@ -45,10 +43,6 @@ autoscaling:
   maxReplicas: 3
   targetCPUUtilizationPercentage: 75
 
-config:
-  appName: DemoApp
-  logLevel: info
-
 useSealedSecrets: true
 
 global:
@@ -80,12 +74,6 @@ grafana:
 
 grafanaIngress:
   enabled: false
-
-sidecar:
-  dashboards:
-    enabled: true
-    label: grafana_dashboard
-    folder: /opt/bitnami/grafana/provisioning/dashboards/custom
 
 serviceMonitor:
   enabled: true

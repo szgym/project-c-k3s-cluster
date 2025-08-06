@@ -47,10 +47,6 @@ spec:
             port: {{ .Values.service.port }}
           initialDelaySeconds: 15
           periodSeconds: 10
-        envFrom:
-          - configMapRef:
-              name: {{ include "demo-app.fullname" . }}-config
-          - secretRef:
-              name: {{ include "demo-app.fullname" . }}-secret
+
 
 

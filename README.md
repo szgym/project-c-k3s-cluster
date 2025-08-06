@@ -79,6 +79,7 @@ project-c/
 ├── app/
 │   └── app.py
 ├── Dockerfile
+├── grafana-values.yaml
 └── README.md
 ```
 - Lint & Template-Render: `helm lint charts/demo-app`
@@ -111,7 +112,7 @@ project-c/
   `sudo mv kubeseal /usr/local/bin/`
   - Confirm installation
   `kubeseal --version`
-  `kubectl create secret generic demo-app-secret --from-literal=API_TOKEN=newtoken --from-literal=DB_PASSWORD=securepassword -n project-c --dry-run=client -o yaml > demo-app-secret.yaml`
+  `kubectl create secret generic demo-app-secret --from-literal=API_TOKEN=newtoken --from-literal=DB_PASSWORD=securepassword -n    project-c --dry-run=client -o yaml > demo-app-secret.yaml`
   `kubeseal --format=yaml < demo-app-secret.yaml > demo-app-sealedsecret.yaml`
   `kubectl apply -f demo-app-sealedsecret.yaml`
   `helm upgrade --install demo-app ./charts/demo-app -n project-c`
@@ -240,8 +241,8 @@ project-c/
   - CPU/memory usage threshold
 - Verified alert firing in Prometheus UI.
 - changed to official Grafana chart: `helm repo add grafana https://grafana.github.io/helm-charts`
-`helm repo update`
-`helm upgrade --install grafana grafana/grafana -f project-c/values.yaml -n monitoring`
+  `helm repo update`
+  `helm upgrade --install grafana grafana/grafana -f project-c/values.yaml -n monitoring`
 
 
 ## Final Refinements & Docs (Week 7)
@@ -249,11 +250,27 @@ project-c/
   `helm upgrade --install grafana grafana/grafana -f grafana-values.yaml -n monitoring`
   `helm upgrade --install demo-app ./charts/demo-app -n project-c`
 - Reviewed all manifests.
+  `kubectl get all,ingress,configmap,secret,pvc,servicemonitor -n project-c`
+  `kubectl get all,ingress,configmap,secret,pvc,servicemonitor -n monitoring`
 - Ensured Helm chart is reusable and parameterized.
 - Created and documented custom dashboards in Grafana:
   - Application metrics
   - CPU usage
 - Verified `helm upgrade` works with modified values.
+- Install EFK Stack 
+  `kubectl create namespace logging`
+- Add Helm Repos
+  `helm repo add elastic https://helm.elastic.co`
+  `helm repo add fluent https://fluent.github.io/helm-charts`
+  `helm repo update`
+- Deploy Elasticsearch
+  `helm install elasticsearch elastic/elasticsearch -n logging  --set replicas=1  --set minimumMasterNodes=1  --set persistence.enabled=true --set resources.requests.memory=512Mi`
+-  Deploy Kibana
+  `helm install kibana elastic/kibana -n logging  --set service.type=ClusterIP  --set ingress.enabled=true  --set ingress.className=traefik  --set ingress.hosts[0].host=kibana.local  --set ingress.hosts[0].paths[0].path="/"  --set ingress.hosts[0].paths[0].pathType=Prefix`
+- Deploy Fluent Bit
+  `helm install fluent-bit fluent/fluent-bit -n logging  --set backend.type=es  --set backend.es.host=elasticsearch-master.logging.svc.cluster.local  --set backend.es.port=9200`
+  `helm upgrade fluent-bit fluent/fluent-bit -n logging --set backend.type=es  --set backend.es.host=elasticsearch-master.logging.svc.cluster.local  --set backend.es.port=9200  --set backend.es.tls=yes  --set backend.es.tls_verify=no  --set backend.es.http_user=elastic  --set backend.es.http_passwd=euQO6sLXpF2DFKG7`
+
 
 ## Demo (Week 8)
 

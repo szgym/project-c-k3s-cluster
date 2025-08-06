@@ -1,0 +1,56 @@
+# project-c/fluentbit-values.yaml
+input:
+  tail:
+    enabled: true
+    path: /var/log/containers/*.log
+    parser: docker
+
+filter:
+  kubernetes:
+    enabled: true
+    # Egyéb beállítások...
+
+output:
+  es:
+    enable: true
+    host: elasticsearch-master.logging.svc.cluster.local
+    port: 9200
+    tls: false
+    http_user: elastic
+    http_passwd: euQO6sLXpF2DFKG7
+    index: fluentbit
+    type: _doc
+
+config:
+  service: |
+    [SERVICE]
+        Flush        1
+        Daemon       Off
+        Log_Level    info
+        Config_Watch On
+        HTTP_Server  On
+        HTTP_Listen  0.0.0.0
+        HTTP_Port    2020
+        Parsers_File /opt/bitnami/fluent-bit/conf/parsers.conf
+        Parsers_File /opt/bitnami/fluent-bit/conf/custom_parsers.conf
+
+
+
+extraVolumeMounts:
+  - name: varlog
+    mountPath: /var/log
+
+extraVolumes:
+  - name: varlog
+    emptyDir: {}
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+
+
