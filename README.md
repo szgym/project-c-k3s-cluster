@@ -8,7 +8,9 @@ This project demonstrates deploying a containerized Flask application to a local
 
 ## 🗂️ Contents
 
-- [Cluster Setup (Week 1)](#cluster-setup-week-1)
+- [Quick Start](#quick-start)
+- [Create GitHub repository](#create-github-repository)
+- [Cluster Setup and Containerization(Week 1)](#cluster-setup-and-Containerization-week-1)
 - [Basic Deployment (Week 2)](#basic-deployment-week-2)
 - [Helm Chart (Week 3)](#helm-chart-week-3)
 - [Ingress & Scaling (Week 4)](#ingress--scaling-week-4)
@@ -17,24 +19,51 @@ This project demonstrates deploying a containerized Flask application to a local
 - [Final Refinements & Docs (Week 7)](#final-refinements--docs-week-7)
 - [Demo (Week 8)](#demo-week-8)
 - [Architecture Diagram](#architecture-diagram)
+- [Troubleshooting](#Troubleshooting)
+- [Tools and Versions](#Tools-and-Versions)
+- [Cleanup](#Cleanup)
 
 ---
 
-## Created GitHub repository
+## Quick Start
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/<your-username>/<repo-name>.git && cd <repo-name>
+# 2. Install k3s
+curl -sfL https://get.k3s.io | sh -
+# 3. Build and import the app image
+docker build -t demo-app:v1 .
+docker save demo-app:v1 | sudo k3s ctr images import -
+# 4. Deploy using Helm
+helm upgrade --install demo-app charts/demo-app -n project-c
+helm upgrade --install grafana grafana/grafana -f grafana-values.yaml -n monitoring
+# 5. Add /etc/hosts entries
+echo "127.0.0.1 demo.local grafana.local prometheus.local" | sudo tee -a /etc/hosts
+```
+
+## Create GitHub repository
 
 - went to https://github.com/new to create repository, tip: initialize with .gitignore
-- Initialize Git locally: `cd ~/project-c` `git init`
-- Add files and create a commit: `git add .`
+- Initialize Git locally: 
+  `cd ~/project-c` 
+  `git init`
+- Add files and create a commit: 
+  `git add .`
   `git commit -m "Initial commit: Project C k3s local cluster"`
 - Connected my local repo to GitHub: 
   `git remote add origin https://github.com/<your-username>/<repo-name>.git`
 - Generated a Personal Access Token
-- Pushed my code to GitHub: `git branch -M main` `git push -u origin main`
+- Pushed my code to GitHub: 
+  `git branch -M main` 
+  `git push -u origin main`
 
 ## Cluster Setup and Containerization (Week 1)
 
-- Installed k3s on local machine with: `curl -sfL https://get.k3s.io | sh -`
-- Verified the cluster is running with: `kubectl get nodes`
+- Installed k3s on local machine with: 
+  `curl -sfL https://get.k3s.io | sh -`
+- Verified the cluster is running with: 
+  `kubectl get nodes`
 - Created a Dedicated Namespace
   `kubectl create namespace project-c`
   `kubectl config set-context --current --namespace=project-c`
@@ -48,8 +77,10 @@ This project demonstrates deploying a containerized Flask application to a local
 
 ## Basic Deployment (Week 2)
 
-- Created Kubernetes resources via Helm chart: `cd project-c/` `helm create demo-app`
-  - Deployment, Service, Ingress, Chart, Values, Hpa, etc. in a folder structure as below:
+- Created Kubernetes resources via Helm chart: 
+  `cd project-c/` 
+  `helm create demo-app`
+- Deployment, Service, Ingress, Chart, Values, Hpa, etc. in a folder structure as below:
 ```plaintext
 project-c/
 ├── charts/
@@ -84,7 +115,8 @@ project-c/
 ├── readonly.yaml
 └── README.md
 ```
-- Lint & Template-Render: `helm lint charts/demo-app`
+- Lint & Template-Render: 
+  `helm lint charts/demo-app`
   `helm template demo-app charts/demo-app --namespace project-c`
 - Verified app was running:
   `kubectl port-forward svc/demo-app 8080:8080`
@@ -134,10 +166,20 @@ project-c/
   `kubectl get nodes -o wide -n project-c`
 - Added `/etc/hosts` entry:
   127.0.0.1 demo.local
-- tested the Ingress Endpoint: `curl http://demo.local/metrics`
-  `curl http://demo.local/` `curl http://demo.local/healthz`
-- added Liveness and readiness Probe in project-c/charts/demo-app/templates/deployment.yaml and Defined CPU/Memory Requests & Limits
+- tested the Ingress Endpoint: 
+  `curl http://demo.local/metrics`
+  `curl http://demo.local/` 
+  `curl http://demo.local/healthz`
+- added Liveness and readiness Probe in project-c/charts/demo-app/templates/deployment.yaml
   `kubectl top pod -n project-c`
+- Defined CPU/Memory Requests & Limits:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
 - added labels in deployment.yaml and Verifyed After Deploy:
   `helm upgrade --install demo-app ./charts/demo-app -n monitoring`
   `helm upgrade --install demo-app ./charts/demo-app -n project-c`
@@ -147,7 +189,8 @@ project-c/
 - Additional Sanity Checks
   `kubectl logs deployment/demo-app -n project-c`
   `kubectl describe pod -l app=demo-app -n project-c`
-- Running the Built‑in Helm Test: `helm test demo-app -n project-c --timeout 180s --logs`
+- Running the Built‑in Helm Test: 
+  `helm test demo-app -n project-c --timeout 180s --logs`
   - output of test: 
     Phase:          Succeeded
     POD LOGS: demo-app-test-connection
@@ -213,7 +256,8 @@ project-c/
   `kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml`
   `kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml`
 - rerun `helm upgrade` command
-- created grafana-ingress.yaml: `kubectl apply -f grafana-ingress.yaml`
+- created grafana-ingress.yaml: 
+  `kubectl apply -f grafana-ingress.yaml`
 - Exposed app metrics with ServiceMonitor:
   kind: ServiceMonitor
   namespaceSelector:
@@ -225,24 +269,31 @@ project-c/
 
 ## Advanced Monitoring & Alerts (Week 6)
 
-- created HPA: `kubectl autoscale deployment demo-app --cpu-percent=50 --min=1 --max=5 -n project-c`
+- created HPA: 
+  `kubectl autoscale deployment demo-app --cpu-percent=50 --min=1 --max=5 -n project-c`
 - tested under load with this load script: `sudo apt install apache2-utils`
   `ab -n 1000 -c 50 http://demo.local/`
-- checking: `kubectl get hpa -n project-c` `kubectl get pods -n project-c -w`
-- created servicemonitor.yaml for /metrics endpoint so Prometheus can watch it: `kubectl apply -f servicemonitor.yaml`
+- checking: 
+  `kubectl get hpa -n project-c` 
+  `kubectl get pods -n project-c -w`
+- created servicemonitor.yaml for /metrics endpoint so Prometheus can watch it: 
+  `kubectl apply -f servicemonitor.yaml`
 - edited charts/demo-app/templates/service.yaml (name: http) so ServiceMonitor in servicemonitor.yaml can connect: 
   ports:
     - name: http
       port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.port }}
 - updated prometheus data source URL to: `http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090`
-- labeled service.yaml: `kubectl label svc demo-app app=demo-app -n project-c --overwrite`
-- created demo-app-rules.yaml with 3 prometheus alerts: `kubectl apply -f demo-app-rules.yaml`
+- labeled service.yaml: 
+  `kubectl label svc demo-app app=demo-app -n project-c --overwrite`
+- created demo-app-rules.yaml with 2 prometheus alerts: 
+  `kubectl apply -f demo-app-rules.yaml`
 - Created PrometheusRule for:
   - `demo_app_custom_metric` threshold
   - CPU/memory usage threshold
 - Verified alert firing in Prometheus UI.
-- changed to official Grafana chart: `helm repo add grafana https://grafana.github.io/helm-charts`
+- changed to official Grafana chart: 
+  `helm repo add grafana https://grafana.github.io/helm-charts`
   `helm repo update`
   `helm upgrade --install grafana grafana/grafana -f project-c/values.yaml -n monitoring`
 
@@ -251,7 +302,7 @@ project-c/
 - created grafana-values.yaml to successfully use sealedsecret.yaml and then ran: 
   `helm upgrade --install grafana grafana/grafana -f grafana-values.yaml -n monitoring`
   `helm upgrade --install demo-app ./charts/demo-app -n project-c`
-- Reviewed all manifests.
+- Reviewed all manifests and checked all resources:
   `kubectl get all,ingress,configmap,secret,pvc,servicemonitor -n project-c`
   `kubectl get all,ingress,configmap,secret,pvc,servicemonitor -n monitoring`
 - Ensured Helm chart is reusable and parameterized.
@@ -318,3 +369,29 @@ project-c/
 - **Pod not restarting**: Check `kubectl describe pod` for crash loop logs.
 - **Alerts not firing**: Ensure rule syntax is valid and thresholds are crossed.
 
+## Tools and Versions
+
+| Tool / Component        | Version                          |
+|-------------------------|----------------------------------|
+| k3s                    | v1.32.6+k3s1                     |
+| Go (k3s build)         | go1.23.10                        |
+| Helm                   | v3.18.4                          |
+| kubeseal               | 0.27.1                           |
+| Grafana (Helm Chart)   | grafana-9.3.0                    |
+| Grafana App            | 12.1.0                           |
+| Prometheus (Helm Chart)| kube-prometheus-stack-75.13.0   |
+| Prometheus App         | v0.83.0                          |
+| Python                 | Used via Docker (`python:3.10-slim`) |
+| Flask                  | Installed via Dockerfile         |
+| Prometheus Client      | Installed via Dockerfile         |
+
+## Cleanup
+
+```bash
+# Delete app and monitoring
+helm uninstall demo-app -n project-c
+helm uninstall grafana -n monitoring
+helm uninstall prometheus -n monitoring
+# Delete namespaces
+kubectl delete ns project-c monitoring logging
+```

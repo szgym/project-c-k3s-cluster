@@ -22,12 +22,12 @@ spec:
 
 
         - alert: HighCPUUsage
-          expr: rate(container_cpu_usage_seconds_total{namespace="{{ .Release.Namespace }}", pod=~"{{ include "demo-app.fullname" . }}.*"}[1m]) > 0.001
+          expr: rate(container_cpu_usage_seconds_total{namespace="{{ .Release.Namespace }}", pod=~"{{ include "demo-app.fullname" . }}.*"}[1m]) > 0.0017
           for: 1m
           labels:
             severity: warning
           annotations:
             summary: "High CPU usage detected in {{ include "demo-app.name" . }}"
-            description: "CPU usage for {{ include "demo-app.name" . }} pods has exceeded 0.1% for 1 minute."
+            description: "CPU usage for {{ include "demo-app.name" . }} pods has exceeded 0.17% for 1 minute."
 {{- end }}
 
