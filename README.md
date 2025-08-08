@@ -26,9 +26,9 @@ This project demonstrates deploying a containerized Flask application to a local
 ---
 ## Architecture Diagram
 
-![alt text](project-c-diagram.png)
+![alt text](pictures/project-c-diagram.png)
 - Prometheus connects the 2 diagrams
-![alt text](monitoring-diagram.png)
+![alt text](pictures/monitoring-diagram.png)
 
 ---
 
@@ -295,9 +295,9 @@ project-c/
   `helm repo update`
   `helm upgrade --install grafana grafana/grafana -f project-c/values.yaml -n monitoring`
 - Grafana showing the memory and cpu usage of k3s and my app:
-![alt text](grafanaUI.png)
+![alt text](pictures/grafanaUI.png)
 - just my app for clearer visibility:
- ![alt text](myappinGrafana.png)
+ ![alt text](pictures/myappinGrafana.png)
 
 ## Advanced Monitoring & Alerts (Week 6)
 
@@ -325,7 +325,7 @@ project-c/
   - CPU/memory usage threshold
 - Verified alert firing in Prometheus UI.
 - Prometheus alerts in action:
-![alt text](PromethuesUI.png)
+![alt text](pictures/PromethuesUI.png)
 
 
 ## Final Refinements & Docs (Week 7)
