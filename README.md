@@ -8,6 +8,7 @@ This project demonstrates deploying a containerized Flask application to a local
 
 ## 🗂️ Contents
 
+- [Architecture Diagram](#architecture-diagram)
 - [Quick Start](#quick-start)
 - [Create GitHub repository](#create-github-repository)
 - [Cluster Setup and Containerization(Week 1)](#cluster-setup-and-Containerization-week-1)
@@ -18,11 +19,138 @@ This project demonstrates deploying a containerized Flask application to a local
 - [Advanced Monitoring & Alerts (Week 6)](#advanced-monitoring--alerts-week-6)
 - [Final Refinements & Docs (Week 7)](#final-refinements--docs-week-7)
 - [Demo (Week 8)](#demo-week-8)
-- [Architecture Diagram](#architecture-diagram)
 - [Troubleshooting](#Troubleshooting)
 - [Tools and Versions](#Tools-and-Versions)
 - [Cleanup](#Cleanup)
 
+---
+## Architecture Diagram
+
+```mermaid
+graph TD
+  subgraph Namespace: project-c
+    A[Deployment: demo-app] --> B[ReplicaSet: demo-app-5cbdf69d]
+    B --> C[Pod: demo-app-5cbdf69d-2wpsb]
+    C --> D[Service: demo-app]
+    D --> E[Ingress: demo.local]
+    C --> F[Metrics Endpoint]
+    F --> G[ServiceMonitor: demo-app-monitor]
+    G --> H[Prometheus]
+
+    C --> I[ConfigMap: demo-app-config]
+    C --> J[Secret: demo-app-secret]
+    J --> K[Sealed Secrets Controller]
+    K --> J
+
+    L[HPA: demo-app] --> A
+
+    C --> W[Fluent Bit]
+    W --> X[Elasticsearch]
+    X --> Y[Kibana]
+  end
+
+  style K fill:#f44,stroke:#333,stroke-width:2px
+  style J fill:#f44,stroke:#333,stroke-width:2px
+  style L fill:#bbf,stroke:#333,stroke-width:2px
+  style G fill:#c49,stroke:#333,stroke-width:2px
+  style H fill:#c49,stroke:#333,stroke-width:2px
+```
+
+```mermaid
+graph TD
+  subgraph monitoring
+    H[Prometheus]
+    M[Grafana]
+    N[Ingress: grafana.local]
+    O[Alertmanager]
+    P[PrometheusRule: demo-app-rules]
+    Q[ServiceMonitor: prometheus-kube-prometheus-alertmanager]
+    R[ServiceMonitor: prometheus-grafana]
+    S[ConfigMap: grafana-config-dashboards]
+    T[Secret: grafana-admin]
+    U[PVC: grafana]
+    V[PVC: alertmanager]
+
+    H --> M
+    M --> N
+    H --> O
+    H --> P
+    Q --> O
+    R --> M
+    S --> M
+    T --> M
+    U --> M
+    V --> O
+
+    style M fill:#c49,stroke:#333,stroke-width:2px
+    style H fill:#c49,stroke:#333,stroke-width:2px
+  end
+```
+
+```mermaid
+graph TD
+  subgraph Namespace: project-c
+    A[Deployment: demo-app] --> B[ReplicaSet: demo-app-5cbdf69d]
+    B --> C[Pod: demo-app-5cbdf69d-2wpsb]
+    C --> D[Service: demo-app]
+    D --> E[Ingress: demo.local]
+    C --> F[Metrics Endpoint]
+    F --> G[ServiceMonitor: demo-app-monitor]
+    G --> H[Prometheus]
+
+    C --> I[ConfigMap: demo-app-config]
+    C --> J[Secret: demo-app-secret]
+    J --> K[Sealed Secrets Controller]
+    K --> J
+
+    L[HPA: demo-app] --> A
+  end
+
+  subgraph Namespace: monitoring
+    H --> M[Grafana]
+    M --> N[Ingress: grafana.local]
+    H --> O[Alertmanager]
+    H --> P[PrometheusRule: demo-app-rules]
+
+    Q[ServiceMonitor: prometheus-kube-prometheus-alertmanager] --> O
+    R[ServiceMonitor: prometheus-grafana] --> M
+
+    S[ConfigMap: grafana-config-dashboards] --> M
+    T[Secret: grafana-admin] --> M
+
+    U[PVC: grafana] --> M
+    V[PVC: alertmanager] --> O
+  end
+
+  C --> W[Fluent Bit]
+  W --> X[Elasticsearch]
+  X --> Y[Kibana]
+
+  style K fill:#f9f,stroke:#333,stroke-width:2px
+  style J fill:#f9f,stroke:#333,stroke-width:2px
+  style L fill:#bbf,stroke:#333,stroke-width:2px
+  style G fill:#cfc,stroke:#333,stroke-width:2px
+  style H fill:#cfc,stroke:#333,stroke-width:2px
+  style M fill:#cfc,stroke:#333,stroke-width:2px
+```
+
+---
+
+```text
+   ┌─────────────┐           ┌──────────────┐           ┌────────────┐
+   │  Developer  │           │  Ingress     │           │  Grafana   │
+   │  (Host)     ├──────────▶│  Controller  ├──────────▶│  Dashboards│
+   └─────┬───────┘           └──────┬───────┘           └──────┬─────┘
+         │                          │                          │
+         ▼                          ▼                          ▼
+┌─────────────────┐     ┌──────────────────┐      ┌───────────────────────┐
+│  demo.local +   │     │ demo-app Service │      │ Prometheus + AlertMgr │
+│  /etc/hosts     │     │  (ClusterIP)     │      │  (metrics scraping)   │
+└─────────────────┘     └──────────────────┘      └───────────────────────┘
+         │                          │                          ▲
+         └────────────►────────────┴───────────────►──────────┘
+                    k3s Cluster: Deployed via Helm
+```
 ---
 
 ## Quick Start
@@ -265,7 +393,15 @@ project-c/
   selector:
     matchLabels:
       app: demo-app
-- Verified `demo_app_custom_metric` in Prometheus and Grafana.
+- Verified `/metrics` is working in Prometheus and Grafana.
+- changed to official Grafana chart: 
+  `helm repo add grafana https://grafana.github.io/helm-charts`
+  `helm repo update`
+  `helm upgrade --install grafana grafana/grafana -f project-c/values.yaml -n monitoring`
+- Grafana showing the memory and cpu usage of k3s and my app:
+![alt text](grafanaUI.png)
+- just my app for clearer visibility:
+ ![alt text](myappinGrafana.png)
 
 ## Advanced Monitoring & Alerts (Week 6)
 
@@ -289,13 +425,11 @@ project-c/
 - created demo-app-rules.yaml with 2 prometheus alerts: 
   `kubectl apply -f demo-app-rules.yaml`
 - Created PrometheusRule for:
-  - `demo_app_custom_metric` threshold
+  - `/metrics` http request threshold
   - CPU/memory usage threshold
 - Verified alert firing in Prometheus UI.
-- changed to official Grafana chart: 
-  `helm repo add grafana https://grafana.github.io/helm-charts`
-  `helm repo update`
-  `helm upgrade --install grafana grafana/grafana -f project-c/values.yaml -n monitoring`
+- Prometheus alerts in action:
+![alt text](PromethuesUI.png)
 
 
 ## Final Refinements & Docs (Week 7)
@@ -339,28 +473,6 @@ project-c/
 - Prepared clean deployment state.
 - Tested scaling and pod self-healing.
 - Visualized app metrics in Grafana live.
-
----
-
-## Architecture Diagram
-
-```text
-   ┌─────────────┐           ┌──────────────┐           ┌────────────┐
-   │  Developer  │           │  Ingress     │           │  Grafana   │
-   │  (Host)     ├──────────▶│  Controller  ├──────────▶│  Dashboards│
-   └─────┬───────┘           └──────┬───────┘           └──────┬─────┘
-         │                          │                          │
-         ▼                          ▼                          ▼
-┌─────────────────┐     ┌──────────────────┐      ┌───────────────────────┐
-│  demo.local +   │     │ demo-app Service │      │ Prometheus + AlertMgr │
-│  /etc/hosts     │     │  (ClusterIP)     │      │  (metrics scraping)   │
-└─────────────────┘     └──────────────────┘      └───────────────────────┘
-         │                          │                          ▲
-         └────────────►────────────┴───────────────►──────────┘
-                    k3s Cluster: Deployed via Helm
-```
-
----
 
 ## Troubleshooting
 
