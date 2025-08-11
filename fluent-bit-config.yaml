@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: logging
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush         1
+        Log_Level     info
+        Parsers_File  parsers.conf
+        HTTP_Server   On
+        HTTP_Listen   0.0.0.0
+        HTTP_Port     2020
+
+    @INCLUDE input-kubernetes.conf
+    @INCLUDE filter-kubernetes.conf
+    @INCLUDE output-stdout.conf
+    @INCLUDE output-elasticsearch.conf
+
+  input-kubernetes.conf: |
+    [INPUT]
+        Name              tail
+        Tag               kube.*
+        Path              /var/log/containers/*.log
+        Parser            cri,docker
+        DB                /var/log/db/flb_kube.db
+        Mem_Buf_Limit     20MB
+        Buffer_Chunk_Size 512KB
+        Buffer_Max_Size   20MB
+        Skip_Long_Lines   On
+
+  filter-kubernetes.conf: |
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*
+        Kube_Tag_Prefix     kube.var.log.containers.
+
+    [FILTER]
+        Name    modify
+        Match   kube.*
+        Remove  docker_id
+        Remove  container_image
+
+    [FILTER]
+        Name    nest
+        Match   kube.*
+        Operation lift
+        Nested_under kubernetes
+
+    [FILTER]
+        Name     lua
+        Match    kube.*
+        script   parse_nested.lua
+        call     parse_nested_json
+
+  output-stdout.conf: |
+    [OUTPUT]
+        Name   stdout
+        Match  *
+        Format json_lines
+
+  output-elasticsearch.conf: |
+    [OUTPUT]
+        Name            es
+        Match           *
+        Host            elasticsearch-master.logging.svc
+        Port            9200
+        Logstash_Format Off
+        Generate_ID     On
+        Retry_Limit     10
+        Suppress_Type_Name  On
+        Replace_Dots    On
+        Trace_Error     On
+
+  parsers.conf: |
+    [PARSER]
+        Name        docker
+        Format      json
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep   On
+
+    [PARSER]
+        Name        cri
+        Format      regex
+        Regex       ^(?<time>[^ ]+) (?<stream>stdout|stderr) F (?<log>.*)$
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+        Time_Keep   On
+
+  parse_nested.lua: |
+    function parse_nested_json(tag, timestamp, record)
+        local json = require("cjson") or require("dkjson")
+        if record["log"] then
+            local decoded = json.decode(record["log"])
+            if decoded then
+                for k, v in pairs(decoded) do
+                    record[k] = v
+                end
+                record["log"] = nil
+            end
+        end
+        return 1, timestamp, record
+    end
+

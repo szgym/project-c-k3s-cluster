@@ -18,13 +18,13 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 30,
+  "id": 2,
   "links": [],
   "panels": [
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "deu2yc2jkctfka"
+        "uid": "ceudmjqygritce"
       },
       "fieldConfig": {
         "defaults": {
@@ -120,6 +120,7 @@
     }
   ],
   "preload": false,
+  "refresh": "10s",
   "schemaVersion": 41,
   "tags": [],
   "templating": {

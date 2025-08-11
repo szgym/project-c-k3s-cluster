@@ -348,11 +348,20 @@ project-c/
   `helm repo update`
 - Deploy Elasticsearch
   `helm install elasticsearch elastic/elasticsearch -n logging  --set replicas=1  --set minimumMasterNodes=1  --set persistence.enabled=true --set resources.requests.memory=512Mi`
--  Deploy Kibana
-  `helm install kibana elastic/kibana -n logging  --set service.type=ClusterIP  --set ingress.enabled=true  --set ingress.className=traefik  --set ingress.hosts[0].host=kibana.local  --set ingress.hosts[0].paths[0].path="/"  --set ingress.hosts[0].paths[0].pathType=Prefix`
-- Deploy Fluent Bit
-  `helm install fluent-bit fluent/fluent-bit -n logging  --set backend.type=es  --set backend.es.host=elasticsearch-master.logging.svc.cluster.local  --set backend.es.port=9200`
-  `helm upgrade fluent-bit fluent/fluent-bit -n logging --set backend.type=es  --set backend.es.host=elasticsearch-master.logging.svc.cluster.local  --set backend.es.port=9200  --set backend.es.tls=yes  --set backend.es.tls_verify=no  --set backend.es.http_user=elastic  --set backend.es.http_passwd=euQO6sLXpF2DFKG7`
+  `helm upgrade elasticsearch elastic/elasticsearch  -n logging  -f project-c/elasticsearch-values.yaml`
+-  Deploy Kibana: created kibana.yaml and applied it
+  `kubectl apply -f kibana.yaml`
+- Deploy Fluent Bit:
+  `kubectl apply -f fluent-bit-config.yaml`
+  `kubectl apply -f fluent-bit-daemonset.yaml`
+  `kubectl apply -f fluent-bit-rbac.yaml`
+-after making changes:
+  `kubectl delete configmap fluent-bit-config -n logging`
+  `kubectl apply -f fluent-bit-config.yaml`
+  `kubectl delete pod -n logging -l app=fluent-bit`
+  kubectl rollout restart daemonset/fluent-bit -n logging
+- log into kibana: 
+  `kubectl port-forward svc/kibana -n logging 5601:5601`
 
 
 ## Demo (Week 8)
