@@ -620,16 +620,17 @@ helm upgrade --install grafana grafana/grafana -f grafana-values.yaml -n monitor
 - Tested scaling and pod self-healing.
 - Visualized app metrics in Grafana live.
 
-- Option 1: Enable RBAC and create a read-only service account:
-- created and applied readonly.yaml:
-  `kubectl apply -f readonly.yaml`
-- tested it to only list pods/services:
-  `kubectl auth can-i list pods --as=system:serviceaccount:project-c:readonly-user -n project-c`
-  `kubectl auth can-i create pods --as=system:serviceaccount:project-c:readonly-user -n project-c`
-- Option 2: Run kube-bench locally for CIS benchmark scan:
-  `docker run --rm -v /etc:/etc -v /var:/var --pid=host aquasec/kube-bench version`
-  `docker run --rm -v /etc:/etc -v /var:/var --pid=host aquasec/kube-bench run`
-
+```bash
+# Option 1: Enable RBAC and create a read-only service account:
+# created and applied readonly.yaml:
+  kubectl apply -f readonly.yaml
+# tested it to only list pods/services:
+  kubectl auth can-i list pods --as=system:serviceaccount:project-c:readonly-user -n project-c
+  kubectl auth can-i create pods --as=system:serviceaccount:project-c:readonly-user -n project-c
+#Option 2: Run kube-bench locally for CIS benchmark scan:
+  docker run --rm -v /etc:/etc -v /var:/var --pid=host aquasec/kube-bench version
+  docker run --rm -v /etc:/etc -v /var:/var --pid=host aquasec/kube-bench run
+```
 ### 🎤 Demo Flow
 - Deploy Flask app using Helm.
 - Access app via demo.local; test endpoints /, /healthz, /metrics.
