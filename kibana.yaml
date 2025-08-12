@@ -50,7 +50,7 @@ metadata:
 data:
   kibana.yml: |
     server.host: "0.0.0.0"
-    elasticsearch.hosts: ["http://elasticsearch-master:9200"]
+    elasticsearch.hosts: ["http://elasticsearch-master-headless.logging.svc.cluster.local:9200"]
     elasticsearch.ssl.verificationMode: none
     xpack.encryptedSavedObjects.encryptionKey: 947f55e1f1f367785d4a246e10b130e5
     xpack.reporting.encryptionKey: ac13d6c41d15e05c6b52eff556b6c8de

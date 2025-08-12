@@ -1,0 +1,18 @@
+#project-c/your-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-config
+  namespace: logging
+data:
+  elasticsearch.yml: |
+    cluster.name: elasticsearch
+    discovery.seed_hosts: []
+    cluster.initial_master_nodes: ["elasticsearch-master-0"]
+    network.host: 0.0.0.0
+    http.port: 9200
+    xpack.license.self_generated.type: basic
+    xpack.security.enabled: false
+    xpack.security.http.ssl.enabled: false
+    xpack.security.transport.ssl.enabled: false
+

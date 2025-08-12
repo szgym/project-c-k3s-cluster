@@ -1,8 +1,47 @@
-# Project C: Local Kubernetes Cluster (k3s)
+# 🚀 Project C: Local Kubernetes Cluster (k3s)
 
-## Overview
+## 🌐 Overview
 
-This project demonstrates deploying a containerized Flask application to a local Kubernetes cluster (k3s), with full observability using Prometheus and Grafana. The project follows the 8-week progression outlined in the TCS DevOps Internship Program. A complete end-to-end setup of a Kubernetes-based deployment using k3s, Helm, Prometheus, and Grafana to deploy and monitor a Python Flask application with custom metrics.
+This project demonstrates the deployment of a containerized **Python Flask application** to a local **Kubernetes cluster powered by k3s**, featuring built-in monitoring, centralized logging, and reproducibility through Helm charts.
+
+Designed for the **8-week TCS DevOps Internship**, it guides users from basic cluster setup to advanced observability tooling, culminating in a professional demo-ready environment.
+
+## 🔧 Observability Tools
+
+Key tools for metrics collection, visualization, and alerting:
+
+- **Prometheus**
+  - Scrapes application and cluster metrics.
+  - Integrates with prometheus.local/alerts to trigger alerts based on defined thresholds.
+
+- **Grafana**
+  - Displays metrics via interactive dashboards.
+  - Visualizes pod health, app-level metrics (CPU/Memory usage).
+
+## 🪵 Logging Stack (EFK)
+
+Centralized log management powered by the EFK stack:
+
+- **Fluent Bit**
+  - Collects container logs enriched with Kubernetes metadata.
+  - Optimizes log payloads and ships them to Elasticsearch.
+
+- **Elasticsearch**
+  - Indexes and stores logs for fast querying and analysis.
+
+- **Kibana**
+  - UI for searching logs, filtering across namespaces, and building visualizations.
+
+## 📦 Helm-Based Packaging
+
+All components are managed using Helm, ensuring consistency and easy upgrades:
+
+- Custom Helm chart for the Flask application
+- Prometheus & Grafana via community Helm charts
+- EFK stack optionally installed via Helm and custom YAML
+
+### 📚 Context
+This setup follows the 8-week **TCS DevOps Internship** progression, delivering a complete, local, end-to-end platform for deploying, monitoring, and troubleshooting a Python Flask app on k3s.
 
 ---
 
@@ -10,27 +49,17 @@ This project demonstrates deploying a containerized Flask application to a local
 
 - [Architecture Diagram](#architecture-diagram)
 - [Quick Start](#quick-start)
-- [Create GitHub repository](#create-github-repository)
-- [Cluster Setup and Containerization(Week 1)](#cluster-setup-and-Containerization-week-1)
-- [Basic Deployment (Week 2)](#basic-deployment-week-2)
-- [Helm Chart (Week 3)](#helm-chart-week-3)
-- [Ingress & Scaling (Week 4)](#ingress--scaling-week-4)
-- [Monitoring Integration (Week 5)](#monitoring-integration-week-5)
-- [Advanced Monitoring & Alerts (Week 6)](#advanced-monitoring--alerts-week-6)
-- [Final Refinements & Docs (Week 7)](#final-refinements--docs-week-7)
-- [Demo (Week 8)](#demo-week-8)
-- [Troubleshooting](#Troubleshooting)
-- [Tools and Versions](#Tools-and-Versions)
-- [Cleanup](#Cleanup)
+- [Weekly Progression](#weekly-progression)
+- [Monitoring & Logging Setup](#monitoring--logging-setup)
+- [Demo & RBAC](#demo--rbac)
+- [Tools and Versions](#tools-and-versions)
 
----
-## Architecture Diagram
+## 🧩 Architecture Diagram
 
-![alt text](pictures/project-c-diagram.png)
-- Prometheus connects the 2 diagrams
-![alt text](pictures/monitoring-diagram.png)
+![Architecture](pictures/project-c-diagram.png)
+> Prometheus connects the two layers of diagrams, facilitating observability and alerting.
 
----
+![Monitoring](pictures/monitoring-diagram.png)
 
 ```text
    ┌─────────────┐           ┌──────────────┐           ┌────────────┐
@@ -82,256 +111,492 @@ echo "127.0.0.1 demo.local grafana.local prometheus.local" | sudo tee -a /etc/ho
   `git branch -M main` 
   `git push -u origin main`
 
-## Cluster Setup and Containerization (Week 1)
+## 📦 Week 1: Cluster Setup & Containerization
 
-- Installed k3s on local machine with: 
-  `curl -sfL https://get.k3s.io | sh -`
-- Verified the cluster is running with: 
-  `kubectl get nodes`
-- Created a Dedicated Namespace
-  `kubectl create namespace project-c`
-  `kubectl config set-context --current --namespace=project-c`
-- Created Dockerfile for Flask app (`demo-app`) exposing `/metrics`.
-- Built and loaded Docker image into k3s using:
-  `docker build -t demo-app:v1 .`
-  `docker run --rm -p 8080:8080 demo-app:v1`
-  `curl http://localhost:8080/`
-  `docker save demo-app:v1 | sudo k3s ctr images import -`
-  
+### ✅ Goals
 
-## Basic Deployment (Week 2)
+- Install a local Kubernetes distribution (k3s).
+- Containerize the Flask application.
+- Verify cluster readiness and successful image build.
 
-- Created Kubernetes resources via Helm chart: 
-  `cd project-c/` 
-  `helm create demo-app`
-- Deployment, Service, Ingress, Chart, Values, Hpa, etc. in a folder structure as below:
+### 🛠️ Setup Commands
+
+```bash
+# Install k3s
+curl -sfL https://get.k3s.io | sh -
+
+# Verify cluster node
+kubectl get nodes
+
+# Create dedicated namespace
+kubectl create namespace project-c
+kubectl config set-context --current --namespace=project-c
+```
+### 🐳 Containerize Application
+```bash
+# Build Flask app image
+docker build -t demo-app:v1 .
+
+# Run locally to verify
+docker run --rm -p 8080:8080 demo-app:v1
+curl http://localhost:8080/
+
+# Import into k3s containerd
+docker save demo-app:v1 | sudo k3s ctr images import -
+ ``` 
+### ✅ Outcome
+- Verified cluster via kubectl get nodes
+- Flask app container image built and loaded
+
+---
+
+## 🚀 Week 2: Basic Kubernetes Deployment
+
+### ✅ Goals
+
+- Deploy containerized app via Kubernetes.
+- Create Helm chart or YAML manifests.
+- Validate service exposure and pod health.
+
+### 📁 File Structure (trimmed)
 ```plaintext
 project-c/
-├── charts/
-│   └── demo-app/
-│       ├── Chart.yaml
-│       ├── values.yaml
-│       └── templates/
-│           └── dashboards
-│               ├── demo-app-dashboard.json
-│               └── original-dashboard.json
-│           └── tests/
-│               └── test-connection.yaml
-│           ├── deployment.yaml
-│           ├── service.yaml
-│           ├── configmap.yaml
-│           ├── dashboard-provisioning-config.yaml
-│           ├── ingress.yaml
-│           ├── hpa.yaml
-│           ├── grafana-ingress.yaml
-│           ├── prometheus-ingress.yaml
-│           ├── servicemonitor.yaml
-│           ├── demo-app-rules.yaml
-│           ├── NOTES.txt
-│           ├── _helpers.tpl
-│           ├── sealedsecret.yaml
-│           └── serviceaccount.yaml
 ├── app/
 │   └── app.py
+├── charts/
+│   └── demo-app/
+│       └── dashboards
+│           └── demo-app-dashboard.json
+│       └── templates/
+│           ├── configmap.yaml
+│           ├── dashboard-provisioning-config.yaml
+│           ├── demo-app-rules.yaml
+│           ├── deployment.yaml
+│           ├── grafana-ingress.yaml
+│           ├── hpa.yaml
+│           ├── ingress.yaml
+│           ├── prometheus-ingress.yaml
+│           ├── sealedsecret.yaml
+│           ├── service.yaml
+│           └── servicemonitor.yaml
+│       ├── Chart.yaml
+│       └── values.yaml
+├── pictures/
 ├── Dockerfile
+├── elasticsearch-values.yaml
+├── fluent-bit-config.yaml
+├── fluent-bit-daemonset.yaml
+├── fluent-bit-rbac.yaml
 ├── grafana-values.yaml
-├── fluentbit-values.yaml
-├── readonly.yaml
-└── README.md
+├── kibana.yaml
+├── fluent-bit-values.yaml
+└── readonly.yaml
 ```
-- Lint & Template-Render: 
-  `helm lint charts/demo-app`
-  `helm template demo-app charts/demo-app --namespace project-c`
-- Verified app was running:
-  `kubectl port-forward svc/demo-app 8080:8080`
 
-## Helm Chart (Week 3)
+### 🧪 Helm Workflow
+```bash
+# Create chart scaffold
+cd project-c/
+helm create demo-app
 
-- Developed Helm chart in `charts/demo-app/`
-- Parameterized values in `values.yaml`:
-  - replicaCount
-  - added serviceAccount:
-            create: false
-            name: ""
-  - image.repository/tag
-  - service type/port
-  - Added an autoscaling stub so the HPA template has the keys it expects.
-- created configmap.yaml and sealedsecret.yaml
-  - configured values.yaml, deployment.yaml to include them, then ran: 
-  `helm upgrade --install demo-app ./demo-app`
-  `kubectl get configmap,secret,deploy,pod -n project-c`
-  `kubectl apply -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.25.0/controller.yaml`
-  - Download the binary (version v0.27.1)
-  `curl -LO https://github.com/bitnami-labs/sealed-secrets/releases/download/ v0.27.1/kubeseal-0.27.1-linux-amd64.tar.gz`
-  - Extract the binary
-  `tar -xzf kubeseal-0.27.1-linux-amd64.tar.gz kubeseal`
-  - Make it executable and move to /usr/local/bin
-  `chmod +x kubeseal`
-  `sudo mv kubeseal /usr/local/bin/`
-  - Confirm installation
-  `kubeseal --version`
-  `kubectl create secret generic demo-app-secret --from-literal=API_TOKEN=newtoken --from-literal=DB_PASSWORD=securepassword -n    project-c --dry-run=client -o yaml > demo-app-secret.yaml`
-  `kubeseal --format=yaml < demo-app-secret.yaml > demo-app-sealedsecret.yaml`
-  `kubectl apply -f demo-app-sealedsecret.yaml`
-  `helm upgrade --install demo-app ./charts/demo-app -n project-c`
-- Verified deployment and Installed my Helm Release with:
-  `helm install demo-app charts/demo-app -n project-c`
-- Verify Kubernetes Resources
-  `kubectl get all -n project-c`
-- Komodor Helm Dashboard installation: `helm repo add komodorio https://helm-charts.komodor.io`
-  `helm repo update`
-  `helm install helm-dashboard komodorio/helm-dashboard -n kube-system --create-namespace`
+# Lint and render templates
+helm lint charts/demo-app
+helm template demo-app charts/demo-app --namespace project-c
+```
+### 🔍 Verification
+```bash
+# Deploy resources
+helm upgrade --install demo-app charts/demo-app -n project-c
 
-## Ingress & Scaling (Week 4)
+# Check pods and services
+kubectl get pods,svc -n project-c
 
-- Installed Traefik ingress controller (already built into k3s).
-- Configure Local DNS for Ingress:
-  mapped demo.local to the k3s node’s IP. First, finding that IP:
-  `kubectl get nodes -o wide -n project-c`
-- Added `/etc/hosts` entry:
-  127.0.0.1 demo.local
-- tested the Ingress Endpoint: 
-  `curl http://demo.local/metrics`
-  `curl http://demo.local/` 
-  `curl http://demo.local/healthz`
-- added Liveness and readiness Probe in project-c/charts/demo-app/templates/deployment.yaml
-  `kubectl top pod -n project-c`
-- Defined CPU/Memory Requests & Limits:
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 250m
-      memory: 256Mi
-- added labels in deployment.yaml and Verifyed After Deploy:
-  `helm upgrade --install demo-app ./charts/demo-app -n monitoring`
-  `helm upgrade --install demo-app ./charts/demo-app -n project-c`
-  `kubectl get deploy demo-app -n project-c -o yaml | grep -A 10 "labels:"`
-  `kubectl get deploy demo-app -n project-c -o jsonpath="{.metadata.annotations}"`
-- Helm Upgrade with Probes: `helm upgrade demo-app charts/demo-app -n project-c`
-- Additional Sanity Checks
-  `kubectl logs deployment/demo-app -n project-c`
-  `kubectl describe pod -l app=demo-app -n project-c`
-- Running the Built‑in Helm Test: 
-  `helm test demo-app -n project-c --timeout 180s --logs`
+# Test app response
+kubectl port-forward svc/demo-app 8080:8080
+curl http://localhost:8080/
+```
+### ✅ Outcome
+- Application deployed to cluster
+- Service reachable via port-forwarding or NodePort
+
+## 🛠️ Week 3: Helm Chart & Configuration
+
+### ✅ Goals
+
+- Convert raw manifests into a reusable Helm chart.
+- Parameterize key values (replica count, image tag, service type).
+- Begin planning application exposure (Ingress, NodePort, etc.).
+
+### 📦 Chart Customization
+
+- Base chart scaffold: `helm create demo-app`
+- Added configurable values to `values.yaml`:
+  - `replicaCount`
+  - `image.repository` and `image.tag`
+  - `service.type`, `resources`, and `serviceAccount`
+  - Stubbed autoscaling values for HPA template
+- Included extra templates:
+  - `configmap.yaml`, `sealedsecret.yaml`, `hpa.yaml`, `ingress.yaml`
+
+### 🔐 Sealed Secrets Flow
+
+```bash
+# Install Sealed Secrets controller
+kubectl apply -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.25.0/controller.yaml
+
+# Setup kubeseal binary
+curl -LO https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.27.1/kubeseal-0.27.1-linux-amd64.tar.gz
+tar -xzf kubeseal-0.27.1-linux-amd64.tar.gz kubeseal
+sudo mv kubeseal /usr/local/bin/
+kubeseal --version
+#make kubeseal executable
+chmod +x kubeseal
+
+# Create and seal secret
+kubectl create secret generic demo-app-secret \
+  --from-literal=API_TOKEN=newtoken \
+  --from-literal=DB_PASSWORD=securepassword \
+  -n project-c --dry-run=client -o yaml > demo-app-secret.yaml
+
+kubeseal --format=yaml < demo-app-secret.yaml > demo-app-sealedsecret.yaml
+kubectl apply -f demo-app-sealedsecret.yaml
+```
+### 🚀 Helm Release Verification
+```bash
+# Install and verify chart
+helm upgrade --install demo-app ./charts/demo-app -n project-c
+kubectl get all -n project-c
+```
+
+- Komodor Helm Dashboard installation for purpose Helm UI visualization:
+```bash
+  helm repo add komodorio https://helm-charts.komodor.io
+  helm repo update
+  helm install helm-dashboard komodorio/helm-dashboard -n kube-system --create-namespace
+```
+
+### ✅ Outcome
+- App chart now reusable with parameterized configs.
+- Secrets securely integrated via kubeseal.
+
+---
+
+## 🌐 Week 4: Ingress & Scaling
+
+### ✅ Goals
+
+- Expose the app via Ingress for browser access.
+- Configure DNS/local host mapping.
+- Add readiness/liveness probes and scale deployment.
+
+### 🌍 Local DNS Setup
+
+```bash
+# Map domain to localhost
+echo "127.0.0.1 demo.local" | sudo tee -a /etc/hosts
+
+# Verify ingress routing
+curl http://demo.local/
+curl http://demo.local/healthz
+curl http://demo.local/metrics
+```
+### 📈 Readiness & Scaling
+- Configured probes in deployment.yaml:
+  - livenessProbe and readinessProbe using /healthz
+
+- Defined resource requests and limits:
+```yaml
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+```
+```bash
+# added labels in deployment.yaml and Verifyed After Deploy:
+  kubectl get deploy demo-app -n project-c -o yaml | grep -A 10 "labels:"
+  kubectl get deploy demo-app -n project-c -o jsonpath="{.metadata.annotations}"
+  kubectl label svc demo-app app=demo-app -n project-c --overwrite
+# Helm Upgrade with Probes: 
+  `helm upgrade demo-app charts/demo-app -n project-c`
+#edited HPA template in templates/hpa.yaml, applied the Changes with `helm upgrade`
+# Scaled deployment via Helm values or manually:
+  `kubectl scale deploy/demo-app --replicas=3 -n project-c`
+
+### 🔬 Verification & Testing
+# Test logging and readiness
+kubectl logs deployment/demo-app -n project-c
+kubectl describe pod -l app=demo-app -n project-c
+#check memry and cpu(cores)
+kubectl top pod -n project-c
+# Helm test
+helm test demo-app -n project-c --timeout 180s --logs
+```
   - output of test: 
     Phase:          Succeeded
     POD LOGS: demo-app-test-connection
     Connecting to demo-app:8080 … index.html saved
-- edited HPA template in templates/hpa.yaml, applied the Changes with `helm upgrade`
-- Verified scaling with `replicaCount: 3`.
 
-## Monitoring Integration (Week 5)
+### ✅ Outcome
+- App accessible via friendly domain demo.local.
+- Probes operational; scaling validated through HPA or manual replica count.
 
-- Add the Prometheus Helm Repository:
-  `helm repo add prometheus-community https://prometheus-community.github.io/helm-charts`
-  `helm repo update`
-- Create the Monitoring Namespace
-  `kubectl create namespace monitoring`
-- Installed Prometheus with Helm:
-  `helm install prometheus prometheus-community/prometheus --namespace monitoring --set  server.service.type=NodePort --set alertmanager.service.type=ClusterIP`
-- Verify Prometheus Pods & Services: `kubectl get pods,svc -n monitoring`
-- Port‑Forward to Access the Prometheus UI:
-  `kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090`
-- Edited charts/demo-app/templates/service.yaml and added under metadata:
+## 📊 Week 5: Monitoring Integration (Prometheus & Grafana)
+
+### ✅ Goals
+
+- Deploy Prometheus and Grafana via Helm.
+- Expose app metrics at `/metrics`.
+- Scrape metrics using Prometheus.
+- Build dashboards in Grafana.
+
+### ⚙️ Setup Steps
+
+```bash
+# Add Helm repos
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+# Create monitoring namespace
+kubectl create namespace monitoring
+
+# 🚀 Install Prometheus & Grafana
+# Install Prometheus
+helm install prometheus prometheus-community/prometheus \
+  --namespace monitoring \
+  --set server.service.type=NodePort \
+  --set alertmanager.service.type=ClusterIP
+
+# Install Grafana
+helm install grafana grafana/grafana \
+  --namespace monitoring \
+  --set service.type=NodePort \
+  --set adminUser=admin \
+  --set adminPassword=admin
+```
+
+### 🧬 App Metrics Endpoint
+- Add annotations to service.yaml:
+
+```yaml
+metadata:
   annotations:
     prometheus.io/scrape: "true"
-    prometheus.io/port:   "8080"
-    prometheus.io/path:   "/metrics"
-- Upgraded my app chart with `helm upgrade`
-- modified app.py with this: 
-  @app.route('/metrics')
-  def metrics():
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+```
+- Add /metrics route in app.py:
+
+```python
+@app.route('/metrics')
+def metrics():
     metric = 'demo_app_custom_metric 1\n'
     return Response(metric, mimetype='text/plain')
-
-- reBuild the image:
-  `docker rmi demo-app:v1`
-  `docker build --no-cache -t demo-app:v1 .`
-- Import into k3s and restart:
-  `docker save demo-app:v1 | sudo k3s ctr images import -`
-  `kubectl rollout restart deployment/demo-app -n project-c`
-  `kubectl get pods -n project-c -o wide`
-  `kubectl logs -l app=demo-app -n project-c`
-
-- Install Grafana & Build Your Dashboard, Added the Grafana Helm Repository:
-  `helm repo add grafana https://grafana.github.io/helm-charts`
-  `helm repo update`
-- Installed Grafana in the monitoring Namespace: 
-  `helm install grafana grafana/grafana --namespace monitoring --set service.type=NodePort --set   adminUser=admin --set adminPassword=admin`
+```
+🔁 Rebuild & Restart
+```bash
+docker rmi demo-app:v1
+docker build --no-cache -t demo-app:v1 .
+docker save demo-app:v1 | sudo k3s ctr images import -
+kubectl rollout restart deployment/demo-app -n project-c
+kubectl get pods -n project-c -o wide
+kubectl logs -l app=demo-app -n project-c
+```
+- Verify Prometheus Pods & Services: 
+  `kubectl get pods,svc -n monitoring`
+- Port‑Forward to Access the Prometheus UI:
+  `kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090`
 - Verify Grafana Resources:
   `kubectl get pods,svc -n monitoring | grep grafana`
-- Port‑Forward to Access Grafana: `kubectl port-forward svc/grafana -n monitoring 3000:80`
-- Added Prometheus as a Data Source
-- Created a Dashboard & Panel, Added a Pod CPU/Memory Panel
+
+### 📈 Grafana Setup
+ `kubectl port-forward svc/grafana -n monitoring 3000:80`
+- Add Prometheus as a data source.
+- Create dashboards for:
+  - Custom app metrics
+  - Pod CPU/Memory
+  - Cluster overview
+
 - Deploying Grafana with `grafana.local` Ingress.
 - created new values in the values.yaml for Grafana
 - Added `/etc/hosts` entry:
   127.0.0.1 grafana.local
 - Upgraded Grafana with the override
   `helm upgrade prometheus prometheus-community/kube-prometheus-stack -n monitoring -f values.yaml`
-- run into issue: `ensure CRDs are installed first, resource mapping not found for name:` solution:
-  `kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml`
-  `kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml`
-  `kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml`
-  `kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml`
-  `kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml`
-  `kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml`
-  `kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml`
+- run into issue: `ensure CRDs are installed first, resource mapping not found for name:` solution: 
+```bash
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
+```
 - rerun `helm upgrade` command
 - created grafana-ingress.yaml: 
   `kubectl apply -f grafana-ingress.yaml`
+```bash
+# created servicemonitor.yaml for /metrics endpoint so Prometheus can watch it: 
+  kubectl apply -f servicemonitor.yaml
+# label to match ServiceMonitor selector
+kubectl label svc demo-app app=demo-app -n project-c --overwrite
+```
 - Exposed app metrics with ServiceMonitor:
+```yaml
   kind: ServiceMonitor
   namespaceSelector:
     matchNames: ["project-c"]
   selector:
     matchLabels:
       app: demo-app
+```
+- edited charts/demo-app/templates/service.yaml (name: http) so ServiceMonitor in servicemonitor.yaml can connect:
+```yaml
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+```
 - Verified `/metrics` is working in Prometheus and Grafana.
 - changed to official Grafana chart: 
   `helm repo add grafana https://grafana.github.io/helm-charts`
   `helm repo update`
-  `helm upgrade --install grafana grafana/grafana -f project-c/values.yaml -n monitoring`
+  `helm upgrade --install grafana grafana/grafana -f grafana-values.yaml -n monitoring`
 - Grafana showing the memory and cpu usage of k3s and my app:
 ![alt text](pictures/grafanaUI.png)
 - just my app for clearer visibility:
  ![alt text](pictures/myappinGrafana.png)
 
-## Advanced Monitoring & Alerts (Week 6)
+## 🚨 Week 6: Advanced Monitoring, Alerts & Logging (Optional)
 
-- created HPA: 
-  `kubectl autoscale deployment demo-app --cpu-percent=50 --min=1 --max=5 -n project-c`
-- tested under load with this load script: `sudo apt install apache2-utils`
-  `ab -n 1000 -c 50 http://demo.local/`
-- checking: 
-  `kubectl get hpa -n project-c` 
-  `kubectl get pods -n project-c -w`
-- created servicemonitor.yaml for /metrics endpoint so Prometheus can watch it: 
-  `kubectl apply -f servicemonitor.yaml`
-- edited charts/demo-app/templates/service.yaml (name: http) so ServiceMonitor in servicemonitor.yaml can connect: 
-  ports:
-    - name: http
-      port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.port }}
-- updated prometheus data source URL to: `http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090`
-- labeled service.yaml: 
-  `kubectl label svc demo-app app=demo-app -n project-c --overwrite`
-- created demo-app-rules.yaml with 2 prometheus alerts: 
-  `kubectl apply -f demo-app-rules.yaml`
-- Created PrometheusRule for:
-  - `/metrics` http request threshold
-  - CPU/memory usage threshold
+### ✅ Goals
+
+- Configure alerting rules in Prometheus.
+- Trigger alerts based on metric thresholds.
+- Optionally deploy the EFK stack for centralized logs.
+
+### 📊 Prometheus Alerts
+
+```bash
+# Create HPA
+kubectl autoscale deployment demo-app \
+  --cpu-percent=50 --min=1 --max=5 -n project-c
+
+# Load test
+sudo apt install apache2-utils
+ab -n 1000 -c 50 http://demo.local/
+
+# Watch scaling
+kubectl get hpa -n project-c
+kubectl get pods -n project-c -w
+```
+
+- Create demo-app-rules.yaml containing:
+  - HTTP request threshold alert
+  - CPU/memory usage alert
+- Apply alert rules:
+`kubectl apply -f demo-app-rules.yaml`
+Update Prometheus data source:
+http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
 - Verified alert firing in Prometheus UI.
 - Prometheus alerts in action:
 ![alt text](pictures/PromethuesUI.png)
 
+### 🪵 Optional: EFK Stack Installation
+```bash
+# Create logging namespace
+kubectl create namespace logging
+```
+### Deploy components:
+```bash
+# Elasticsearch
+kubectl apply -f elasticsearch.yaml
+kubectl apply -f elasticsearch-configmap.yaml
+kubectl get pods -n logging -w
 
-## Final Refinements & Docs (Week 7)
-- created grafana-values.yaml to successfully use sealedsecret.yaml and then ran: 
-  `helm upgrade --install grafana grafana/grafana -f grafana-values.yaml -n monitoring`
-  `helm upgrade --install demo-app ./charts/demo-app -n project-c`
+# Fluent Bit
+kubectl apply -f fluent-bit-config.yaml
+kubectl apply -f fluent-bit-daemonset.yaml
+kubectl apply -f fluent-bit-rbac.yaml
+kubectl get pods -n logging -l app=fluent-bit -w
+
+# after making changes:
+kubectl delete configmap fluent-bit-config -n logging
+kubectl apply -f fluent-bit-config.yaml
+kubectl delete pod -n logging -l app=fluent-bit
+kubectl rollout restart daemonset/fluent-bit -n logging
+
+# Kibana
+kubectl apply -f kibana.yaml
+kubectl rollout status deploy/kibana -n logging
+kubectl port-forward -n logging svc/kibana 5601:5601
+
+#verification
+kubectl logs -n logging -l app=fluent-bit --tail=20
+kubectl exec -n logging elasticsearch-master-0 -- curl -s http://localhost:9200/_cat/indices?v
+kubectl get pvc -n logging
+```
+- check indices in Stack Management->Index Management, Create Data View with fluent-bit and once Kibana is showing logs in Discover page:
+- The early flood was backlog ingestion; my steady-state is much lower.
+- Most “big numbers” are Fluent Bit’s own logs. Exclude or drop the logging namespace to see the real app signal.
+- demo-app is producing about 22 logs/min right now, which looks stable. 
+- Fluent Bit DaemonSet tails /var/log/containers, enriches with Kubernetes metadata, de-escapes nested JSON (Lua filter), and ships to Elasticsearch.
+- Elasticsearch stores logs in the fluent-bit index (or daily-rolled indices via Logstash format).
+- Kibana Discover uses index pattern fluent-bit* for queries, filters, and saved searches.
+- RBAC is applied to allow metadata enrichment across namespaces.
+- log into kibana: 
+  `kubectl port-forward svc/kibana -n logging 5601:5601`
+- Create index pattern: fluent-bit* with the correct time field.
+💡 Tip: Access Kibana via port-forward and create a Kibana index pattern (e.g., `fluent-bit*`) for quick log triage.
+![alt text](pictures/Kibana.png)
+
+### ✅ Outcome
+- Prometheus alerts visible in UI.
+- App autoscales in response to load.
+- Optional EFK stack provides searchable logs in Kibana.
+
+## 🧹 Week 7: Final Refinements & Documentation
+
+### ✅ Goals
+
+- Review and clean configuration files.
+- Finalize architecture diagrams and screenshots.
+- Write step-by-step deployment and observability instructions.
+- Create reproducible setup instructions for fresh environments.
+
+### 📁 Review Checklist
+
+- Verify Helm chart values and defaults.
+- Ensure secrets, probes, and annotations are properly documented.
+- Confirm all namespaces:
+  - `project-c` for the app
+  - `monitoring` for Prometheus & Grafana
+  - `logging` (if EFK was deployed)
+
+### 🖼️ Visual Assets
+
+- Architecture diagram (app + observability flow)
+- Screenshots:
+  - Grafana dashboard with pod metrics
+  - Prometheus alert firing view
+  - Kibana query results for container logs
+
+Placed assets in a `pictures/` folder and reference with relative paths in README.
+
+### 🧪 Reproducibility
+
+Test full setup from scratch:
+
+```bash
+# Full install flow
+helm upgrade --install demo-app charts/demo-app -n project-c
+helm upgrade --install prometheus prometheus-community/prometheus -n monitoring
+helm upgrade --install grafana grafana/grafana -f grafana-values.yaml -n monitoring
+```
 - Reviewed all manifests and checked all resources:
   `kubectl get all,ingress,configmap,secret,pvc,servicemonitor -n project-c`
   `kubectl get all,ingress,configmap,secret,pvc,servicemonitor -n monitoring`
@@ -340,31 +605,21 @@ project-c/
   - Application metrics
   - CPU usage
 - Verified `helm upgrade` works with modified values.
-- Install EFK Stack 
-  `kubectl create namespace logging`
-- Add Helm Repos
-  `helm repo add elastic https://helm.elastic.co`
-  `helm repo add fluent https://fluent.github.io/helm-charts`
-  `helm repo update`
-- Deploy Elasticsearch
-  `helm install elasticsearch elastic/elasticsearch -n logging  --set replicas=1  --set minimumMasterNodes=1  --set persistence.enabled=true --set resources.requests.memory=512Mi`
-  `helm upgrade elasticsearch elastic/elasticsearch  -n logging  -f project-c/elasticsearch-values.yaml`
--  Deploy Kibana: created kibana.yaml and applied it
-  `kubectl apply -f kibana.yaml`
-- Deploy Fluent Bit:
-  `kubectl apply -f fluent-bit-config.yaml`
-  `kubectl apply -f fluent-bit-daemonset.yaml`
-  `kubectl apply -f fluent-bit-rbac.yaml`
--after making changes:
-  `kubectl delete configmap fluent-bit-config -n logging`
-  `kubectl apply -f fluent-bit-config.yaml`
-  `kubectl delete pod -n logging -l app=fluent-bit`
-  kubectl rollout restart daemonset/fluent-bit -n logging
-- log into kibana: 
-  `kubectl port-forward svc/kibana -n logging 5601:5601`
 
+### ✅ Outcome
+- Finalized project docs with diagrams, screenshots, and reproducible flow.
+- README serves as a deployment and troubleshooting guide.
 
-## Demo (Week 8)
+## 🎬 Week 8: Demo Preparation & Delivery
+
+### ✅ Goals
+
+- Prep a clean demo-ready cluster.
+- Walk through setup, scaling, and monitoring live.
+- Submit full deliverables and final PDF report.
+- Tested scaling and pod self-healing.
+- Visualized app metrics in Grafana live.
+
 - Option 1: Enable RBAC and create a read-only service account:
 - created and applied readonly.yaml:
   `kubectl apply -f readonly.yaml`
@@ -375,16 +630,34 @@ project-c/
   `docker run --rm -v /etc:/etc -v /var:/var --pid=host aquasec/kube-bench version`
   `docker run --rm -v /etc:/etc -v /var:/var --pid=host aquasec/kube-bench run`
 
-- Prepared clean deployment state.
-- Tested scaling and pod self-healing.
-- Visualized app metrics in Grafana live.
+### 🎤 Demo Flow
+- Deploy Flask app using Helm.
+- Access app via demo.local; test endpoints /, /healthz, /metrics.
+- Scale replicas using Helm or HPA.
+- Simulate load with Apache Bench and observe Grafana metrics.
+- Trigger Prometheus alert and show it firing.
+- (Optional) Query logs in Kibana using pod label filters.
 
-## Troubleshooting
+### 📄 Submission Package
+- README.md (final version)
+- PDF export of documentation
+- Helm chart(s)
+- Screenshots and diagrams (stored in pictures/)
+- Example dashboard JSON (Grafana)
+- Secrets sample (sealed or templated)
+- troubleshooting FAQ
+### 🛠️ Troubleshooting Documentation
 
+- Common issues to include:
 - added Troubleshooting tips along the way in weekly work
 - **Grafana panel empty**: Check `Prometheus > Targets`, and ensure metric is collected.
+- **Ingress not routing**: Verify domain in /etc/hosts and Ingress resource
 - **Pod not restarting**: Check `kubectl describe pod` for crash loop logs.
-- **Alerts not firing**: Ensure rule syntax is valid and thresholds are crossed.
+- **Alerts not firing**: Ensure rule syntax is valid and thresholds are crossed, simulate metric changes
+
+### ✅ Outcome
+- Demo rehearsed and delivered smoothly.
+- Full documentation and project archive submitted.
 
 ## Tools and Versions
 
@@ -402,7 +675,7 @@ project-c/
 | Flask                  | Installed via Dockerfile         |
 | Prometheus Client      | Installed via Dockerfile         |
 
-## Cleanup
+### 🧼 Cleanup
 
 ```bash
 # Delete app and monitoring
@@ -411,4 +684,5 @@ helm uninstall grafana -n monitoring
 helm uninstall prometheus -n monitoring
 # Delete namespaces
 kubectl delete ns project-c monitoring logging
+# Reinstall everything from README steps
 ```

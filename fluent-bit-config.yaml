@@ -48,12 +48,6 @@ data:
         Operation lift
         Nested_under kubernetes
 
-    [FILTER]
-        Name     lua
-        Match    kube.*
-        script   parse_nested.lua
-        call     parse_nested_json
-
   output-stdout.conf: |
     [OUTPUT]
         Name   stdout
@@ -64,7 +58,7 @@ data:
     [OUTPUT]
         Name            es
         Match           *
-        Host            elasticsearch-master.logging.svc
+        Host            elasticsearch-master-headless.logging.svc
         Port            9200
         Logstash_Format Off
         Generate_ID     On

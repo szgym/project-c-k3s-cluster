@@ -1,0 +1,88 @@
+#project-c/elasticsearch.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-master-headless
+  namespace: logging
+  labels:
+    app: elasticsearch
+spec:
+  clusterIP: None
+  selector:
+    app: elasticsearch
+  ports:
+    - port: 9200
+      name: http
+    - port: 9300
+      name: transport
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch-master
+  namespace: logging
+spec:
+  serviceName: elasticsearch-master-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:8.5.1
+          env:
+            - name: ES_JAVA_OPTS
+              value: "-Xms512m -Xmx512m"
+            - name: xpack.license.self_generated.type
+              value: "basic"
+            - name: xpack.security.enabled
+              value: "false"
+            - name: xpack.security.http.ssl.enabled
+              value: "false"
+            - name: xpack.security.transport.ssl.enabled
+              value: "false"
+            - name: xpack.security.http.ssl.verification_mode
+              value: "none"
+            - name: xpack.security.transport.ssl.verification_mode
+              value: "none"
+          ports:
+            - containerPort: 9200
+              name: http
+            - containerPort: 9300
+              name: transport
+          volumeMounts:
+            - name: config
+              mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+              subPath: elasticsearch.yml
+            - name: storage
+              mountPath: /usr/share/elasticsearch/data
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - -c
+                - curl --silent http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=5s
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: config
+          configMap:
+            name: elasticsearch-config
+  volumeClaimTemplates:
+    - metadata:
+        name: storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 30Gi
+
